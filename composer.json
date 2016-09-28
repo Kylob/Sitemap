@@ -1,0 +1,28 @@
+{
+    "name": "bootpress/sitemap",
+    "description": "A sitemap generator that saves all of your links, tracks any updates, and makes the entire site searchable.",
+    "keywords": ["bootpress", "sitemap", "search"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kyle Gadd",
+            "email": "kyle.gadd@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "bootpress/page": "^1.0",
+        "bootpress/asset": "^1.0",
+        "bootpress/sqlite": "^1.0",
+        "bootpress/hierarchy": "^1.0",
+        "symfony/http-foundation": "^2.3||^3.0"
+    },
+    "require-dev": {
+        "bootpress/htmlunit": "^1.0",
+        "friendsofphp/php-cs-fixer": "^1.0",
+        "squizlabs/php_codesniffer": "^2.5"
+    },
+    "autoload": {
+        "psr-4": { "BootPress\\Sitemap\\": "src" }
+    }
+}
