@@ -111,7 +111,7 @@ class SitemapTest extends \BootPress\HTMLUnit\Component
             'path' => 'floats',
             'title' => 'What do you call a computer <u>floating</u><p>in</p> the ocean?',
             'content' => 'A Dell Rolling in the Deep.',
-            'updated' => strtotime('-2 day'),
+            'updated' => strtotime('-2 day') * -1,
             'additional' => 'info',
         ));
         $sitemap->upsert('jokes', array(
@@ -128,7 +128,7 @@ class SitemapTest extends \BootPress\HTMLUnit\Component
         $sitemap->upsert('blog/advice', array(
             'path' => 'cheese',
             'content' => 'The early bird gets the worm, but the second mouse gets the cheese.',
-            'updated' => strtotime('-2 week'),
+            'updated' => strtotime('-2 week') * -1,
         ));
         $sitemap->upsert('blog/advice', array(
             'path' => 'success',
