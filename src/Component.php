@@ -226,7 +226,7 @@ class Component
      * @param string   $category The sitemap section you are working on.
      * @param string[] $save     An ``array(key => value)`` pairs of data to save for each link.
      *                           The keys we are looking for are:
-     *                           - '**category**' - To group and specify results.
+     *                           - '**updated**' - A timestamp integer (if known).
      *                           - '**path**' - Of the url, without any suffix.
      *                           - '**title**' - Of the page.
      *                           - '**description**' - The meta description.
