@@ -238,7 +238,7 @@ class Component
     {
         $sitemap = array();
         $save['category'] = $category;
-        $updated = (isset($save['updated']) && is_numeric($save['updated'])) ? $save['updated'] : time();
+        $updated = (isset($save['updated']) && is_numeric($save['updated'])) ? abs($save['updated']) : time();
         unset($save['updated']);
         foreach (array('category', 'path', 'title', 'description', 'keywords', 'image', 'content') as $value) {
             $sitemap[$value] = (isset($save[$value])) ? $save[$value] : '';
