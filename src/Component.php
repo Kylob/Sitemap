@@ -100,11 +100,11 @@ class Component
                 $xml = array();
                 $offset = ($num > 1) ? (($num - 1) * $limit) - 1 : 0;
                 if ($stmt = $sitemap->db->query(array(
-                    'SELECT m.path, m.updated',
-                    'FROM sitemap AS m',
-                    'INNER JOIN categories AS c ON m.category_id = c.id',
+                    'SELECT s.path, s.updated',
+                    'FROM sitemap AS s',
+                    'INNER JOIN categories AS c ON s.category_id = c.id',
                     'WHERE c.category LIKE ?',
-                    'ORDER BY m.path ASC',
+                    'ORDER BY s.path ASC',
                     'LIMIT '.$offset.', '.$limit,
                 ), $category.'%', 'row')) {
                     while (list($path, $updated) = $sitemap->db->fetch($stmt)) {
