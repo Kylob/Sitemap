@@ -136,7 +136,12 @@ class Component
                 $hier = new Hierarchy($sitemap->db, 'categories');
                 $categories = $hier->level(0, array('lft', 'rgt', 'category AS name'));
                 foreach ($categories as $id => $cat) {
-                    if ($row = $sitemap->db->row('SELECT MAX(updated) AS updated, COUNT(*) AS count FROM sitemap WHERE category_id BETWEEN '.$cat['lft'].' AND '.$cat['rgt'], '', 'assoc')) {
+                    if ($row = $sitemap->db->row(array(
+                        'SELECT MAX(s.updated) AS updated, COUNT(*) AS count',
+                        'FROM categories AS c',
+                        'INNER JOIN sitemap AS s ON c.id = s.category_id',
+                        'WHERE c.lft BETWEEN '.$cat['lft'].' AND '.$cat['rgt'],
+                    ), '', 'assoc')) {
                         $last_modified = max($last_modified, $row['updated']);
                         $updated = date('Y-m-d', $row['updated']);
                         for ($i = 1; $i <= $row['count']; $i += $limit) {

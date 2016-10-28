@@ -18,9 +18,11 @@ class SitemapTest extends \BootPress\HTMLUnit\Component
 
     public static function tearDownAfterClass()
     {
-        $db = self::$page['dir'].'/Sitemap.db';
-        if (is_file($db)) {
-            unlink($db);
+        foreach (array('Sitemap.db', 'databases.yml') as $name) {
+            $file = self::$page['dir'].'/'.$name;
+            if (is_file($file)) {
+                unlink($file);
+            }
         }
     }
 
