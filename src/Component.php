@@ -131,29 +131,25 @@ class Component
                 );
             } else {
                 $page->enforce('sitemap.xml');
-                $sitemap = new self();
                 $xml = array();
+                $sitemap = new self();
                 $hier = new Hierarchy($sitemap->db, 'categories');
-                $tree = $hier->tree(array('category'));
-                $nest = $hier->nestify($tree);
-                $flat = $hier->flatten($nest);
-                unset($hier);
-                foreach ($flat as $ids) {
-                    if ($row = $sitemap->db->row('SELECT MAX(updated) AS updated, COUNT(*) AS count FROM sitemap WHERE category_id IN('.implode(', ', $ids).')', '', 'assoc')) {
+                $categories = $hier->level(0, array('lft', 'rgt', 'category AS name'));
+                foreach ($categories as $id => $cat) {
+                    if ($row = $sitemap->db->row('SELECT MAX(updated) AS updated, COUNT(*) AS count FROM sitemap WHERE category_id BETWEEN '.$cat['lft'].' AND '.$cat['rgt'], '', 'assoc')) {
                         $last_modified = max($last_modified, $row['updated']);
                         $updated = date('Y-m-d', $row['updated']);
-                        $category = $tree[array_shift($ids)]['category'];
                         for ($i = 1; $i <= $row['count']; $i += $limit) {
                             $num = ceil($i / $limit);
                             $num = ($num > 1) ? '-'.$num : '';
                             $xml[] = "\t".'<sitemap>';
-                            $xml[] = "\t\t".'<loc>'.$page->url['base'].'sitemap-'.$category.$num.'.xml</loc>';
+                            $xml[] = "\t\t".'<loc>'.$page->url['base'].'sitemap-'.$cat['name'].$num.'.xml</loc>';
                             $xml[] = "\t\t".'<lastmod>'.$updated.'</lastmod>';
                             $xml[] = "\t".'</sitemap>';
                         }
                     }
                 }
-                unset($sitemap);
+                unset($hier, $sitemap);
                 if (empty($xml)) {
                     return new Response('', 404);
                 }
