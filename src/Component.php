@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class Component
 {
-    /** @var \BootPress\SQLite\Component The Sitemap.db instance. */
+    /** @var object The ``$page->file('Sitemap.db')``'s \BootPress\SQLite\Component instance. */
     public $db;
 
     /** @var int[] Category id's that we keep track of to conserve on unnecessary queries. */
@@ -24,6 +24,12 @@ class Component
 
     /**
      * Opens the Sitemap database.
+     *
+     * @example
+     *
+     * ```php
+     * $sitemap = new Sitemap();
+     * ```
      */
     public function __construct()
     {
@@ -60,7 +66,13 @@ class Component
     }
 
     /**
-     * Wraps up the database, and closes the connection.  Always unset() the sitemap when you are done using it, especially when you ``$this->reset()``, ``$this->upsert()``, and ``$this->delete()`` anything.
+     * Wraps up any pending transactions, and closes the database connection.  Always ``unset($sitemap)`` when you are done using it.
+     *
+     * @example
+     *
+     * ```php
+     * unset($sitemap);
+     * ```
      */
     public function __destruct()
     {
@@ -80,12 +92,20 @@ class Component
     }
 
     /**
-     * Generates the sitemap[...].xml files to display, and removes 404 pages as they come to our attention.
-     * 
+     * Generate the sitemap.xml files, and remove 404 pages as they appear.  Made static to save you the hassle of opening and closing the database.
+     *
      * @param int $limit   The number of links to display per page.
      * @param int $expires The number of seconds you would like to cache the response.
-     * 
-     * @return \Symfony\Component\HttpFoundation\Response|false
+     *
+     * @return mixed Either ``false`` or a \Symfony\Component\HttpFoundation\Response for you to send.
+     *
+     * @example
+     *
+     * ```php
+     * if ($xml = Sitemap::page()) {
+     *     $page->send($xml);
+     * }
+     * ```
      */
     public static function page($limit = 10000, $expires = 0)
     {
@@ -181,11 +201,34 @@ class Component
     }
 
     /**
-     * Includes the current page in the sitemap if it's an html page and has no query string.
-     * 
-     * @param string $category The type of link you are saving, whatever you want to call it.  This allows you to segregate your search results if desired.
+     * Include the current page in the sitemap if it is an HTML page, and has no query string.  Made static to save you the hassle of opening and closing the database.
+     *
+     * Use this method when you want to "set it, and forget it".  When adding (and updating) **$content** dynamically, then some of your links may be a bit outdated as we can only update them when they are accessed.  If this is unacceptable to you, then use the '**reset**', '**upsert**', and '**delete**' methods to keep everything up-to-date.  Using the static add method would be equivalent to the following code:
+     *
+     * ```php
+     * if (empty($page->url['query'])) {
+     *     $sitemap = new Sitemap();
+     *     $sitemap->upsert($category, array_merge(array(
+     *         'path' => $page->url['path'],
+     *         'title' => $page->title,
+     *         'description' => $page->description,
+     *         'keywords' => $page->keywords,
+     *         'image' => $page->image,
+     *         'content' => $content,
+     *     ), $save));
+     *     unset($sitemap);
+     * }
+     * ```
+     *
+     * @param string $category To group related links.
      * @param string $content  The main body of your page.
-     * @param array  $save     Any other additional information that you consider to be important, and would like available to you when delivering search results.
+     * @param array  $save     Any additional information that you consider to be important, and would like to include with your search results.
+     *
+     * @example
+     *
+     * ```php
+     * Sitemap::add('pages', $html);
+     * ```
      */
     public static function add($category, $content, array $save = array())
     {
@@ -210,9 +253,19 @@ class Component
     }
 
     /**
-     * Call this when you ``$this->upsert()`` everything so that you can ``$this->delete()`` any missing links after.
-     * 
+     * Reset a **$category** before ``$this->upsert()``ing everything in it, so that you can ``$this->delete()`` any missing links after.  Always ``unset($sitemap)`` explicitly when doing this.
+     *
      * @param string $category The sitemap section you are working on.
+     *
+     * @example
+     *
+     * ```php
+     * $sitemap = new Sitemap;
+     * $sitemap->reset('pages');
+     * // $sitemap->upsert('pages', ...); // everything
+     * $sitemap->delete(); // the missing 'pages'
+     * unset($sitemap); // wrap up the database, and close the connection
+     * ```
      */
     public function reset($category)
     {
@@ -222,18 +275,35 @@ class Component
     }
 
     /**
-     * This is to upsert multiple links into the Sitemap database all at once.
-     * 
+     * Upsert a page into the Sitemap.  Always ``unset($sitemap)`` explicitly when doing this.
+     *
+     * When upserting everything into a **$category**, you can ``$this->reset($category)`` beforehand, then ``$this->delete()`` any missing **$category** links afterwards.
+     *
      * @param string   $category The sitemap section you are working on.
-     * @param string[] $save     An ``array(key => value)`` pairs of data to save for each link.
-     *                           The keys we are looking for are:
-     *                           - '**updated**' - A timestamp integer (if known).
-     *                           - '**path**' - Of the url, without any suffix.
-     *                           - '**title**' - Of the page.
-     *                           - '**description**' - The meta description.
-     *                           - '**keywords**' - A comma-separated list of tags.
-     *                           - '**image**' - An image url.
-     *                           - '**content**' - The main content section of the page.  We ``strip_tags()`` in house for searching, but deliver the original content with your search results.
+     * @param string[] $save     An array of data to save for each link:
+     *
+     *   - '**updated**' => A timestamp integer (if known).
+     *   - '**path**' => Of the url, without any suffix.
+     *   - '**title**' => Of the page.
+     *   - '**description**' => The meta description.
+     *   - '**keywords**' => A comma-separated list of tags.
+     *   - '**image**' => An image url.
+     *   - '**content**' => The main content section of the page.
+     *     - We ``strip_tags()`` in house for searching, but deliver the original content with your search results.
+     *   - '**...**' => Anything else you deem appropriate.
+     *
+     * @example
+     *
+     * ```php
+     * $sitemap = new Sitemap;
+     * $sitemap->upsert('pages', array(
+     *     'path' => 'beautiful-terrible-storm',
+     *     'title' => 'I Watched The Storm, So Beautiful Yet Terrific',
+     *     'image' => 'http://example.com/storm.jpg',
+     *     'content' => '<p>It was amazing.</p>',
+     * ));
+     * unset($sitemap); // wrap up the database, and close the connection
+     * ```
      */
     public function upsert($category, array $save)
     {
@@ -265,9 +335,17 @@ class Component
     }
 
     /**
-     * Deletes a specific path (if specified), or everything that was not ``$this->upserted()`` after you ``$this->reset()``ed your sitemap links.
-     * 
+     * Delete a specific **$path** (if specified), or everything that was not ``$this->upsert()``ed after ``$this->reset()``ing your sitemap category.  Always ``unset($sitemap)`` explicitly when doing this.
+     *
      * @param string $path
+     *
+     * @example
+     *
+     * ```php
+     * $sitemap = new Sitemap;
+     * $sitemap->delete('beautiful-terrible-storm');
+     * unset($sitemap); // wrap up the database, and close the connection
+     * ```
      */
     public function delete($path = null)
     {
@@ -288,13 +366,21 @@ class Component
     }
 
     /**
-     * Gives you the total number of search results for the ``$phrase`` given.
-     * 
+     * Get the total number of search results for a given **$phrase**.
+     *
      * @param string $phrase   The search term.
      * @param string $category A specific sitemap section.
      * @param string $where    Adds additional WHERE qualifiers to the query.  Prepend search table fields with an '**s.**', and sitemap table fields with an '**m.**'.
-     * 
+     *
      * @return int The total count.
+     *
+     * @example
+     *
+     * ```php
+     * if (!$pagination->set()) {
+     *   $pagination->total($sitemap->count('words'));
+     * }
+     * ```
      */
     public function count($phrase, $category = '', $where = '')
     {
@@ -302,15 +388,23 @@ class Component
     }
 
     /**
-     * Delivers the search results for the $phrase given from the most relevant to the least.
-     * 
+     * Get the search results for a given **$phrase**, from the most relevant to the least.
+     *
      * @param string      $phrase   The search term.
      * @param string      $category A specific sitemap section.
-     * @param int|string  $limit    If you are not paginating results and only want the top whatever, then this is an integer.  Otherwise just pass the ``$pagination->limit`` LIMIT start, display string.
+     * @param int|string  $limit    If you are not paginating results and only want the top whatever, then this is an integer.  Otherwise just pass the ``$pagination->limit`` '<b> LIMIT offset, length</b>' string.
      * @param int|float[] $weights  An array of importance that you would like to place on the fields searched.  The order is: '**path**', '**title**', '**description**', '**keywords**', and '**content**'.  The default weights are ``array(1,1,1,1,1)``, every field being of equal importance.  If you only want to search the keywords, then you can specify ``array(0,0,0,1,0)``.  Please note that with this arrangement, the most relevant results will be returned first (with the search term being found among the keywords), but all of the other results will also be returned with a rank of 0 if the search term could be found anywhere else.
      * @param string      $where    Adds additional WHERE qualifiers to the query.  Prepend search table fields with an '**s.**', and sitemap table fields with an '**m.**'.
-     * 
+     *
      * @return array An associative array of results.
+     *
+     * @example
+     *
+     * ```php
+     * foreach ($sitemap->search('words', '', $pagination->limit) as $row) {
+     *     print_r($row);
+     * }
+     * ```
      */
     public function search($phrase, $category = '', $limit = '', array $weights = array(), $where = '')
     {
@@ -339,11 +433,17 @@ class Component
 
     /**
      * Once your search results are in, if you would like to know the specific word(s) which made a given page relevant, you may obtain them through this method. 
-     * 
+     *
      * @param string $phrase The original search term.
      * @param int    $docid  The sitemap's docid which is returned with every search result.
-     * 
-     * @return string[] The unique search words found which made the $phrase relevant.
+     *
+     * @return array The unique search words found which made the **$phrase** relevant.
+     *
+     * @example
+     *
+     * ```php
+     * print_r($sitemap->words('words', $row['docid']));
+     * ```
      */
     public function words($phrase, $docid)
     {
