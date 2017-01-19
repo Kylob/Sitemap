@@ -2,6 +2,7 @@
     "name": "bootpress/sitemap",
     "description": "A sitemap generator that saves all of your links, tracks any updates, and makes the entire site searchable.",
     "keywords": ["bootpress", "sitemap", "search"],
+    "homepage": "https://www.bootpress.org/components/sitemap.html",
     "license": "MIT",
     "authors": [
         {
