@@ -16,7 +16,7 @@
         "bootpress/asset": "^1.0",
         "bootpress/sqlite": "^1.0",
         "bootpress/hierarchy": "^1.0",
-        "symfony/http-foundation": "^2.3||^3.0"
+        "symfony/http-foundation": "^2.3 || ^3.0 || ^4.0 || ^5.0 || ^6.0 || ^7.0"
     },
     "require-dev": {
         "bootpress/htmlunit": "^1.0",
